@@ -1,53 +1,228 @@
-# 📡 Telecom Data Engineering Pipeline (Production-Grade)
+# Telecom Data Pipeline
 
-## 🎯 Overview
+A data engineering pipeline for processing telecom call detail records (CDR) using Apache Spark, Kafka, and Airflow with automated data quality validation.
 
-**Enterprise-level Big Data pipeline** for telecom CDR (Call Detail Records) processing with:
-- **Real-time & Batch Processing** (Kafka + Spark Streaming + Spark Batch)
-- **Data Quality Engineering** (Great Expectations validation)
-- **Workflow Orchestration** (Apache Airflow with DAG scheduling)
-- **Distributed Storage** (Hadoop HDFS)
-- **Interactive Dashboards** (Multiple Web UIs)
-
-**Target Role:** Mid to Senior Data Engineer + Quality Engineering
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────┐
-│  Data Sources   │
-│  (CDR Events)   │
-└────────┬────────┘
-         │
-    ┌────▼─────────────────┬─────────────────┐
-    │                      │                 │
-┌───▼────┐         ┌──────▼──────┐   ┌─────▼─────┐
-│ Kafka  │         │  Generator  │   │  Airflow  │
-│ Stream │         │  (Batch)    │   │Orchestrator│
-└───┬────┘         └──────┬──────┘   └─────┬─────┘
-    │                     │                 │
-    │              ┌──────▼──────┐          │
-    │              │   Quality   │◄─────────┘
-    │              │ Validation  │
-    │              └──────┬──────┘
-    │                     │
-    │              ┌──────▼──────┐
-    └─────────────►│    Spark    │
-                   │  Processing │
-                   └──────┬──────┘
-                          │
-                   ┌──────▼──────┐
-                   │    HDFS     │
-                   │  Storage    │
-                   └─────────────┘
+Data Sources → Quality Validation → Processing → Storage
+                                    ↓
+                            Batch (Spark)
+                            Stream (Kafka)
+                            Orchestration (Airflow)
 ```
 
-### Components:
-| Component | Purpose | Web UI Port |
-|-----------|---------|-------------|
-| **Hadoop HDFS** | Distributed storage | 9870 |
+### Components
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Storage | Hadoop HDFS | Distributed file system |
+| Batch Processing | Apache Spark | Parallel data processing |
+| Streaming | Kafka + Spark Streaming | Real-time event processing |
+| Orchestration | Apache Airflow | Workflow automation |
+| Quality Validation | Great Expectations | Data validation framework |
+| Infrastructure | Docker Compose | Container orchestration |
+
+### Data Flow
+
+**Batch Pipeline:**
+```
+CSV Files → Great Expectations → Spark ETL → Parquet Output
+```
+
+**Streaming Pipeline:**
+```
+Producer → Kafka → Spark Streaming → Parquet Output
+```
+
+**Orchestrated Pipeline:**
+```
+Airflow DAG: Generate → Validate → Process → Report
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Docker Desktop
+- Python 3.9+
+- 8GB RAM minimum
+
+### Setup
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start infrastructure
+docker-compose up -d
+
+# Wait 90 seconds for initialization
+```
+
+### Run Batch Pipeline
+
+```bash
+# Generate data
+python src/generator.py
+
+# Validate quality
+python src/data_quality_validator.py
+
+# Process with Spark
+docker exec -it spark-master /spark/bin/spark-submit /src/process_cdr.py
+
+# View results
+python -c "import pandas as pd; print(pd.read_parquet('data/processed/billing_report'))"
+```
+
+### Run Streaming Pipeline
+
+```bash
+# Terminal 1: Start consumer
+docker exec -it spark-master /spark/bin/spark-submit \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0 \
+  /src/streaming_consumer.py
+
+# Terminal 2: Start producer
+docker exec -it spark-master python /src/streaming_producer.py \
+  --rate 10 --broker kafka:9092
+```
+
+### Run with Airflow
+
+1. Access Airflow UI: http://localhost:8088 (admin/admin)
+2. Enable DAG: `telecom_cdr_etl_pipeline`
+3. Trigger execution
+
+## Web Interfaces
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Airflow | http://localhost:8088 | Workflow monitoring |
+| Spark Master | http://localhost:8080 | Job execution |
+| Kafka UI | http://localhost:8082 | Stream monitoring |
+| Hadoop HDFS | http://localhost:9870 | Storage browser |
+
+## Project Structure
+
+```
+├── src/
+│   ├── generator.py                   # Data generation
+│   ├── process_cdr.py                 # Spark batch ETL
+│   ├── data_quality_validator.py      # Quality checks
+│   ├── streaming_producer.py          # Kafka producer
+│   └── streaming_consumer.py          # Spark streaming
+│
+├── airflow/
+│   └── dags/
+│       └── telecom_etl_dag.py         # Workflow definition
+│
+├── data/
+│   ├── raw/                           # Input CSV files
+│   ├── processed/                     # Batch output
+│   ├── streaming_output/              # Stream output
+│   └── quality_reports/               # Validation reports
+│
+├── docker-compose.yml                 # Infrastructure
+├── requirements.txt                   # Python dependencies
+└── supporting_docs/                   # Additional documentation
+```
+
+## Data Quality Validation
+
+The pipeline includes 7 automated quality checks:
+
+1. Schema validation (required columns exist)
+2. Null value detection
+3. Uniqueness constraints (call_id)
+4. Format validation (phone numbers: +947XXXXXXXX)
+5. Enum validation (call_type: VOICE/SMS/DATA)
+6. Range checks (duration: 0-7200 sec, signal: 1-5)
+7. Business rules validation
+
+Quality gates block processing if checks fail. Reports generated in HTML format.
+
+## Technical Details
+
+### Batch Processing
+
+- Input: CSV files in `data/raw/`
+- Processing: Spark aggregations (groupBy, sum, avg)
+- Output: Parquet format in `data/processed/`
+- Jobs: Customer billing, Network health analytics
+
+### Streaming Processing
+
+- Input: Kafka topic `cdr-events`
+- Processing: 5-minute tumbling windows
+- Output: Parquet format in `data/streaming_output/`
+- Features: Watermarking (10 min), checkpointing, exactly-once semantics
+
+### Orchestration
+
+- Scheduler: Every 6 hours
+- Tasks: Generate → Validate → Process → Report → Archive
+- Retries: 2 attempts with 5-minute delay
+- Monitoring: Web UI with task logs
+
+## Common Commands
+
+```bash
+# View running containers
+docker ps
+
+# Check container logs
+docker logs spark-master
+docker logs airflow-webserver
+
+# Restart service
+docker-compose restart spark-master
+
+# Stop all services
+docker-compose down
+
+# Stop and remove all data
+docker-compose down -v
+```
+
+## Troubleshooting
+
+**Containers won't start:**
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+**Port conflicts:**
+Check if ports 8080, 8081, 8082, 8088, 9092 are available.
+
+**Memory errors:**
+Increase Docker memory allocation to 8GB (Docker Desktop → Settings → Resources).
+
+**Module not found:**
+```bash
+pip install -r requirements.txt
+```
+
+## Additional Documentation
+
+- [Setup Guide](supporting_docs/Setup.md) - Detailed installation and configuration
+- [Testing Guide](supporting_docs/Testing.md) - Validation and testing procedures
+
+## Technology Stack
+
+- Apache Spark 3.0.0
+- Apache Kafka 7.4.0
+- Apache Airflow 2.7.3
+- Hadoop 3.2.1
+- Great Expectations 0.18.8
+- Docker Compose 3.8
+- Python 3.9
+
+## License
+
+MIT License
 | **Spark Master** | Batch processing | 8080 |
 | **Spark Worker** | Task execution | 8081 |
 | **Kafka** | Event streaming | - |
