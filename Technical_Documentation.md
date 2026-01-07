@@ -584,7 +584,7 @@ Docker provides consistent environments across development, testing, and product
 - Late Data Handling: 10-minute tolerance
 - Exactly-Once Semantics: Enabled
 
-![Network Metrics](Images\AVG_Signal_Qulity.png)
+![Network Metrics](Images/AVG_Signal_Qulity.png)
 *Average signal quality metrics showing tower performance over time*
 
 ### Airflow Orchestration Results
