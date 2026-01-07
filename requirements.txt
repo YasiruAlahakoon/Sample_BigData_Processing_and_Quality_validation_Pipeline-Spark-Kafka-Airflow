@@ -1,0 +1,19 @@
+# Data Generation
+pandas==2.0.3
+faker==19.3.0
+
+# Data Quality Testing
+great-expectations==0.18.8
+
+# Streaming
+kafka-python==2.0.2
+
+# Apache Spark (for local development)
+pyspark==3.0.0
+
+# Orchestration (Airflow dependencies)
+apache-airflow==2.7.3
+apache-airflow-providers-docker==3.7.0
+
+# Utilities
+pyarrow==14.0.1  # For Parquet file handling

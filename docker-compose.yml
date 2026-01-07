@@ -1,0 +1,191 @@
+version: "3.8"
+
+services:
+  # ========== STORAGE LAYER ==========
+  
+  # --- Hadoop NameNode (The Master Node for Storage) ---
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    restart: always
+    ports:
+      - 9870:9870  # Web UI
+      - 9000:9000  # HDFS service
+    volumes:
+      - ./data:/data
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    networks:
+      - telecom_network
+
+  # --- Hadoop DataNode (The Worker Node for Storage) ---
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    restart: always
+    volumes:
+      - ./data:/data
+    environment:
+      - SERVICE_PRECONDITION=namenode:9870
+    env_file:
+      - ./hadoop.env
+    networks:
+      - telecom_network
+  
+  # ========== PROCESSING LAYER ==========
+      
+  # --- Spark Master (The Master Node for Processing) ---
+  spark-master:
+    image: bde2020/spark-master:3.0.0-hadoop3.2
+    container_name: spark-master
+    ports:
+      - 8080:8080  # Spark Master Web UI
+      - 7077:7077  # Spark Master service
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+    volumes:
+      - ./data:/data
+      - ./src:/src
+    networks:
+      - telecom_network
+
+  # --- Spark Worker (The Worker Node for Processing) ---
+  spark-worker:
+    image: bde2020/spark-worker:3.0.0-hadoop3.2
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    ports:
+      - 8081:8081  # Spark Worker Web UI
+    environment:
+      - "SPARK_MASTER=spark://spark-master:7077"
+    volumes:
+      - ./data:/data
+      - ./src:/src
+    networks:
+      - telecom_network
+
+  # ========== STREAMING LAYER ==========
+
+  # --- Zookeeper (Required for Kafka) ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+    networks:
+      - telecom_network
+
+  # --- Kafka (Message Broker for Streaming) ---
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092  # External access
+      - 29092:29092  # Internal access
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - telecom_network
+
+  # --- Kafka UI (Web Interface for Kafka) ---
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - 8082:8080  # Kafka UI Web Interface
+    environment:
+      KAFKA_CLUSTERS_0_NAME: telecom-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - telecom_network
+
+  # ========== ORCHESTRATION LAYER ==========
+
+  # --- PostgreSQL (Airflow Metadata Database) ---
+  postgres:
+    image: postgres:13
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - telecom_network
+
+  # --- Apache Airflow (Workflow Orchestration) ---
+  airflow-webserver:
+    image: apache/airflow:2.7.3-python3.9
+    container_name: airflow-webserver
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./airflow/logs:/opt/airflow/logs
+    ports:
+      - 8088:8080  # Airflow Web UI
+    command: webserver
+    networks:
+      - telecom_network
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.3-python3.9
+    container_name: airflow-scheduler
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./airflow/logs:/opt/airflow/logs
+    command: scheduler
+    networks:
+      - telecom_network
+
+networks:
+  telecom_network:
+    driver: bridge
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  postgres_data:

@@ -1,0 +1,52 @@
+@"
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Data files (don't commit large data)
+data/raw/*.csv
+data/processed/
+data/streaming_output/
+data/archive/
+data/quality_reports/*.html
+data/reports/
+
+# Keep directory structure but ignore contents
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/streaming_output/.gitkeep
+
+# Docker volumes
+hadoop_namenode/
+hadoop_datanode/
+postgres_data/
+
+# Airflow
+airflow/logs/
+airflow/__pycache__/
+airflow.db
+airflow.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+"@ | Out-File -FilePath .gitignore -Encoding utf8

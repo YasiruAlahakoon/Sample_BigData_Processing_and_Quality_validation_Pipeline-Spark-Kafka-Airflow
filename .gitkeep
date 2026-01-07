@@ -1,0 +1,6 @@
+New-Item -ItemType File -Path "data/raw/.gitkeep" -Force
+New-Item -ItemType File -Path "data/processed/.gitkeep" -Force
+New-Item -ItemType File -Path "data/streaming_output/.gitkeep" -Force
+New-Item -ItemType File -Path "data/archive/.gitkeep" -Force
+New-Item -ItemType File -Path "data/quality_reports/.gitkeep" -Force
+New-Item -ItemType File -Path "data/reports/.gitkeep" -Force
