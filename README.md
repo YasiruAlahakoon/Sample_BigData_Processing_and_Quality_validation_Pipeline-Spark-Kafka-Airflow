@@ -128,6 +128,11 @@ docker exec -it spark-master python /src/streaming_producer.py \
 ├── requirements.txt                   # Python dependencies
 └── supporting_docs/                   # Additional documentation
 ```
+## Documentations
+
+- [Architecture](supporting_docs/Architecture.md) - Detailed Architecture Block Diagrams
+- [Setup Guide](supporting_docs/Setup.md) - Detailed installation and configuration
+- [Testing Guide](supporting_docs/Testing.md) - Validation and testing procedures
 
 ## Data Quality Validation
 
@@ -205,11 +210,7 @@ Increase Docker memory allocation to 8GB (Docker Desktop → Settings → Resour
 pip install -r requirements.txt
 ```
 
-## Additional Documentation
 
-- [Architecture](supporting_docs\Architecture.md) - Detailed Architecture Block Diagrams
-- [Setup Guide](supporting_docs/Setup.md) - Detailed installation and configuration
-- [Testing Guide](supporting_docs/Testing.md) - Validation and testing procedures
 
 ## Technology Stack
 
