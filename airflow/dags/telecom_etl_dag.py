@@ -5,7 +5,6 @@ Orchestrates: Data Generation → Quality Validation → Spark Processing → Mo
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from airflow.operators.docker.docker import DockerOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 import sys

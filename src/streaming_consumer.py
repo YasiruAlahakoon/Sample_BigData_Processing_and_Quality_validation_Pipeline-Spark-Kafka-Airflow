@@ -45,7 +45,7 @@ def main():
     ])
     
     # Read from Kafka stream
-    print(f"[STREAMING] Connecting to Kafka: {KAFKA_BROKER}")
+    print("[STREAMING] Connecting to Kafka: {}".format(KAFKA_BROKER))
     raw_stream = spark \
         .readStream \
         .format("kafka") \
@@ -90,7 +90,7 @@ def main():
         .outputMode("append") \
         .format("parquet") \
         .option("path", OUTPUT_BILLING_STREAM) \
-        .option("checkpointLocation", f"{CHECKPOINT_DIR}/billing") \
+        .option("checkpointLocation", CHECKPOINT_DIR + "/billing") \
         .trigger(processingTime='30 seconds') \
         .start()
     
@@ -121,7 +121,7 @@ def main():
         .outputMode("append") \
         .format("parquet") \
         .option("path", OUTPUT_NETWORK_STREAM) \
-        .option("checkpointLocation", f"{CHECKPOINT_DIR}/network") \
+        .option("checkpointLocation", CHECKPOINT_DIR + "/network") \
         .trigger(processingTime='30 seconds') \
         .start()
     
@@ -135,7 +135,7 @@ def main():
         .option("numRows", 5) \
         .start()
     
-    print("[STREAMING] ✓ All streaming queries started successfully!")
+    print("[STREAMING] All streaming queries started successfully!")
     print("[STREAMING] Processing real-time CDR events...")
     print("[STREAMING] Press Ctrl+C to stop")
     

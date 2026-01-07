@@ -21,7 +21,7 @@ class CDRStreamProducer:
             key_serializer=lambda v: v.encode('utf-8') if v else None
         )
         self.topic = topic
-        self.tower_ids = [f"TOWER_{i:03d}" for i in range(1, 51)]
+        self.tower_ids = ["TOWER_{:03d}".format(i) for i in range(1, 51)]
         
     def generate_event(self):
         """Generate a single CDR event"""
@@ -29,8 +29,8 @@ class CDRStreamProducer:
         
         event = {
             'call_id': fake.uuid4(),
-            'caller_num': f"+947{random.randint(10000000, 99999999)}",
-            'receiver_num': f"+947{random.randint(10000000, 99999999)}",
+            'caller_num': "+947{}".format(random.randint(10000000, 99999999)),
+            'receiver_num': "+947{}".format(random.randint(10000000, 99999999)),
             'call_type': call_type,
             'duration_sec': random.randint(5, 1200) if call_type == 'VOICE' else 0,
             'timestamp': datetime.now().isoformat(),
@@ -47,8 +47,8 @@ class CDRStreamProducer:
             events_per_second: Number of events to generate per second
             duration_minutes: How long to stream (None = infinite)
         """
-        print(f"[STREAMING] Starting CDR event stream...")
-        print(f"[CONFIG] Rate: {events_per_second} events/sec | Topic: {self.topic}")
+        print("[STREAMING] Starting CDR event stream...")
+        print("[CONFIG] Rate: {} events/sec | Topic: {}".format(events_per_second, self.topic))
         
         start_time = time.time()
         event_count = 0
@@ -75,7 +75,7 @@ class CDRStreamProducer:
                 
                 # Log progress every 100 events
                 if event_count % 100 == 0:
-                    print(f"[STREAMING] Sent {event_count} events...")
+                    print("[STREAMING] Sent {} events...".format(event_count))
                 
                 # Control rate
                 time.sleep(1.0 / events_per_second)
@@ -85,7 +85,7 @@ class CDRStreamProducer:
         finally:
             self.producer.flush()
             self.producer.close()
-            print(f"[STREAMING] Total events sent: {event_count}")
+            print("[STREAMING] Total events sent: {}".format(event_count))
 
 
 def main():

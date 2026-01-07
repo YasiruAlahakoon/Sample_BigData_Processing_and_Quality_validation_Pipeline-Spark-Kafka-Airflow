@@ -207,6 +207,7 @@ pip install -r requirements.txt
 
 ## Additional Documentation
 
+- [Architecture](supporting_docs\Architecture.md) - Detailed Architecture Block Diagrams
 - [Setup Guide](supporting_docs/Setup.md) - Detailed installation and configuration
 - [Testing Guide](supporting_docs/Testing.md) - Validation and testing procedures
 

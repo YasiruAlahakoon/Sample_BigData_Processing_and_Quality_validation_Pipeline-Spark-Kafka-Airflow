@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Data files
+data/raw/*.csv
+data/processed/
+data/streaming/
+data/quality_reports/
+
+# Airflow logs and runtime files
+airflow/logs/
+airflow/airflow.db
+airflow/airflow.cfg
+airflow/webserver_config.py
+airflow/airflow-webserver.pid
+
+# Docker volumes
+postgres-db-volume/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hadoop/Spark temporary files
+metastore_db/
+derby.log
+spark-warehouse/
+
+# Checkpoints
+*.crc
+_SUCCESS
