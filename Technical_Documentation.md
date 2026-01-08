@@ -8,7 +8,7 @@
 5. [Framework Analysis](#framework-analysis)
 6. [Implementation Results](#implementation-results)
 7. [Issues and Limitations](#issues-and-limitations)
-8. [Next Steps](#next-steps)
+
 
 ---
 
