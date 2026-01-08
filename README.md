@@ -504,12 +504,6 @@ docker exec -it kafka kafka-topics --create --topic cdr-events --partitions 10 -
 
 ## 🐛 Troubleshooting
 
-### Issue: "No module named 'great_expectations'"
-**Solution:**
-```powershell
-pip install great-expectations
-```
-
 ### Issue: Airflow UI shows "Broken DAG"
 **Solution:**
 ```powershell
